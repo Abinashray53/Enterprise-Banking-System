@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+
+metadata:
+  name: audit-service-config
+  namespace: banking
+
+data:
+
+  SPRING_APPLICATION_NAME: audit-service
+
+  SERVER_PORT: "8080"
+
+  DB_HOST: postgres-audit
+
+  DB_PORT: "5432"
+
+  DB_NAME: auditdb
+
+  KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+
+  ELASTICSEARCH_URL: http://elasticsearch:9200
+
+  OPENSEARCH_URL: http://opensearch:9200
+
+  RETENTION_DAYS: "365"
+
+  LOG_LEVEL: INFO
+
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "*"
+
+  MANAGEMENT_ENDPOINT_PROMETHEUS_ENABLED: "true"

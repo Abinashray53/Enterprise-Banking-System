@@ -1,0 +1,120 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: audit-service
+  namespace: banking
+  labels:
+    app: audit-service
+    tier: backend
+    version: v1
+
+spec:
+  replicas: 3
+  revisionHistoryLimit: 10
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+
+  selector:
+    matchLabels:
+      app: audit-service
+
+  template:
+    metadata:
+      labels:
+        app: audit-service
+        tier: backend
+        version: v1
+
+    spec:
+      serviceAccountName: audit-service-account
+      terminationGracePeriodSeconds: 30
+
+      containers:
+        - name: audit-service
+          image: your-dockerhub/audit-service:latest
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - containerPort: 8080
+              name: http
+
+          envFrom:
+            - configMapRef:
+                name: audit-service-config
+            - secretRef:
+                name: audit-service-secret
+
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: kubernetes
+
+            - name: JAVA_OPTS
+              value: "-Xms512m -Xmx1024m"
+
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+
+            initialDelaySeconds: 20
+            periodSeconds: 10
+
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+
+            initialDelaySeconds: 40
+            periodSeconds: 20
+
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+
+            failureThreshold: 30
+            periodSeconds: 10
+
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+
+            capabilities:
+              drop:
+                - ALL
+
+          volumeMounts:
+            - name: tmp-storage
+              mountPath: /tmp
+
+      volumes:
+        - name: tmp-storage
+          emptyDir: {}
+
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+
+                labelSelector:
+                  matchLabels:
+                    app: audit-service
