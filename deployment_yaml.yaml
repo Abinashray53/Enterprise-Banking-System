@@ -1,0 +1,153 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: fraud-service
+  namespace: banking
+
+  labels:
+    app: fraud-service
+    tier: backend
+    version: v1
+
+spec:
+  replicas: 3
+
+  revisionHistoryLimit: 10
+
+  strategy:
+    type: RollingUpdate
+
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+
+  selector:
+    matchLabels:
+      app: fraud-service
+
+  template:
+
+    metadata:
+
+      labels:
+        app: fraud-service
+        tier: backend
+        version: v1
+
+    spec:
+
+      serviceAccountName: fraud-service-account
+
+      terminationGracePeriodSeconds: 30
+
+      containers:
+
+      - name: fraud-service
+
+        image: your-dockerhub/fraud-service:latest
+
+        imagePullPolicy: IfNotPresent
+
+        ports:
+
+        - containerPort: 8080
+          name: http
+
+        envFrom:
+
+        - configMapRef:
+            name: fraud-service-config
+
+        - secretRef:
+            name: fraud-service-secret
+
+        env:
+
+        - name: SPRING_PROFILES_ACTIVE
+          value: kubernetes
+
+        - name: JAVA_OPTS
+          value: "-Xms512m -Xmx1024m"
+
+        resources:
+
+          requests:
+            cpu: 500m
+            memory: 512Mi
+
+          limits:
+            cpu: "1"
+            memory: 1Gi
+
+        readinessProbe:
+
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8080
+
+          initialDelaySeconds: 20
+          periodSeconds: 10
+
+        livenessProbe:
+
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8080
+
+          initialDelaySeconds: 40
+          periodSeconds: 20
+
+        startupProbe:
+
+          httpGet:
+            path: /actuator/health
+            port: 8080
+
+          failureThreshold: 30
+          periodSeconds: 10
+
+        securityContext:
+
+          runAsNonRoot: true
+
+          runAsUser: 1000
+
+          allowPrivilegeEscalation: false
+
+          readOnlyRootFilesystem: true
+
+          capabilities:
+
+            drop:
+
+            - ALL
+
+        volumeMounts:
+
+        - name: temp-storage
+          mountPath: /tmp
+
+      volumes:
+
+      - name: temp-storage
+        emptyDir: {}
+
+      affinity:
+
+        podAntiAffinity:
+
+          preferredDuringSchedulingIgnoredDuringExecution:
+
+          - weight: 100
+
+            podAffinityTerm:
+
+              topologyKey: kubernetes.io/hostname
+
+              labelSelector:
+
+                matchLabels:
+
+                  app: fraud-service
+                  
