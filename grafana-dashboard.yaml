@@ -1,0 +1,64 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-enterprise-banking-dashboard
+  namespace: monitoring
+data:
+  enterprise-banking-overview.json: |
+    {
+      "annotations": {"list": []},
+      "editable": false,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 0,
+      "id": null,
+      "links": [],
+      "panels": [
+        {
+          "datasource": {"type": "prometheus", "uid": "enterprise-prometheus"},
+          "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "mappings": [], "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 5}]}}, "overrides": []},
+          "gridPos": {"h": 8, "w": 6, "x": 0, "y": 0},
+          "id": 1,
+          "options": {"colorMode": "background", "graphMode": "none", "justifyMode": "center", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
+          "targets": [{"expr": "count(up{job=\"banking-services\"} == 1)", "refId": "A"}],
+          "title": "Banking Services Up",
+          "type": "stat"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "enterprise-prometheus"},
+          "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"}, "custom": {"drawStyle": "line", "fillOpacity": 12, "lineWidth": 1, "showPoints": "never"}, "unit": "reqps"}, "overrides": []},
+          "gridPos": {"h": 8, "w": 18, "x": 6, "y": 0},
+          "id": 2,
+          "options": {"legend": {"calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
+          "targets": [{"expr": "sum by (kubernetes_service_name) (rate(http_server_requests_seconds_count{job=\"banking-services\"}[5m]))", "legendFormat": "{{kubernetes_service_name}}", "refId": "A"}],
+          "title": "Request Rate by Service",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "enterprise-prometheus"},
+          "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"}, "custom": {"drawStyle": "line", "fillOpacity": 12, "lineWidth": 1, "showPoints": "never"}, "unit": "reqps"}, "overrides": []},
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+          "id": 3,
+          "options": {"legend": {"calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
+          "targets": [{"expr": "sum by (kubernetes_service_name) (rate(http_server_requests_seconds_count{job=\"banking-services\",status=~\"5..\"}[5m]))", "legendFormat": "{{kubernetes_service_name}}", "refId": "A"}],
+          "title": "5xx Error Rate by Service",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "enterprise-prometheus"},
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+          "id": 4,
+          "options": {"alertInstanceLabelFilter": "", "alertName": "", "dashboardAlerts": false, "groupBy": [], "groupMode": "default", "maxItems": 20, "sortOrder": 1, "stateFilter": {"firing": true, "noData": false, "normal": false, "pending": true}},
+          "title": "Active Platform Alerts",
+          "type": "alertlist"
+        }
+      ],
+      "refresh": "30s",
+      "schemaVersion": 39,
+      "tags": ["banking", "platform", "observability"],
+      "templating": {"list": []},
+      "time": {"from": "now-6h", "to": "now"},
+      "timezone": "browser",
+      "title": "Enterprise Banking Platform Overview",
+      "uid": "enterprise-banking-overview",
+      "version": 1
+    }

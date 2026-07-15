@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasource-provisioning
+  namespace: monitoring
+data:
+  datasource.yaml: |
+    apiVersion: 1
+    prune: true
+    datasources:
+      - name: Enterprise Prometheus
+        uid: enterprise-prometheus
+        type: prometheus
+        access: proxy
+        url: http://prometheus.monitoring.svc.cluster.local:9090
+        isDefault: true
+        editable: false
+        jsonData:
+          prometheusType: Prometheus
+          timeInterval: 15s
