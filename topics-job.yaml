@@ -1,0 +1,82 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kafka-topic-bootstrap
+  namespace: banking
+  labels:
+    app.kubernetes.io/name: kafka-topic-bootstrap
+spec:
+  backoffLimit: 4
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kafka-topic-bootstrap
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: OnFailure
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: create-topics
+          image: apache/kafka:4.1.1
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/bash
+            - -ec
+            - |
+              for attempt in $(seq 1 60); do
+                if /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --list >/dev/null 2>&1; then
+                  break
+                fi
+                if [ "$attempt" -eq 60 ]; then
+                  echo "Kafka did not become available within ten minutes." >&2
+                  exit 1
+                fi
+                sleep 10
+              done
+
+              create_topic() {
+                /opt/kafka/bin/kafka-topics.sh \
+                  --bootstrap-server kafka:9092 \
+                  --create --if-not-exists \
+                  --topic "$1" \
+                  --partitions 6 \
+                  --replication-factor 3 \
+                  --config min.insync.replicas=2
+              }
+
+              create_topic payment-events
+              create_topic fraud-events
+              create_topic fraud-alerts
+              create_topic loan-events
+              create_topic notification-events
+              create_topic email-events
+              create_topic sms-events
+              create_topic push-events
+              create_topic audit-events
+          env:
+            - name: LOG_DIR
+              value: /tmp/kafka-logs
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}

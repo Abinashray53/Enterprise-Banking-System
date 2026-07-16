@@ -2,9 +2,10 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - namespace.yaml
-  - grafana-datasource.yaml
-  - grafana-dashboard-provider.yaml
-  - grafana-dashboard.yaml
-  - pvc.yaml
-  - service.yaml
-  - deployment.yaml
+  - kraft-secret.yaml
+  - kafka-configmap.yaml
+  - services.yaml
+  - statefulsets.yaml
+  - pdb.yaml
+  - networkpolicy.yaml
+  - topics-job.yaml

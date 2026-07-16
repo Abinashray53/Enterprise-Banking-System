@@ -1,29 +1,40 @@
-# Grafana dashboard foundation
+# Kafka event-streaming foundation
 
-Grafana is deployed in the `monitoring` namespace and automatically provisions
-the in-cluster Prometheus data source plus an Enterprise Banking overview
-dashboard. It depends on the Prometheus phase being deployed first.
+This phase supplies the Kafka dependency already referenced by the payment, loan,
+fraud, notification, and audit services. Applications continue to use the stable
+in-cluster bootstrap address `kafka:9092`.
 
-## Deploy
+## Architecture
 
-Run this from the repository root in the VS Code PowerShell terminal:
+- Three dedicated KRaft controllers maintain the metadata quorum.
+- Three brokers retain banking event streams on individual persistent volumes.
+- Internal client traffic enters through the `kafka` ClusterIP service; brokers
+  advertise their stable StatefulSet DNS names for metadata discovery.
+- The topic bootstrap Job is idempotent and creates the current service topics
+  only after Kafka is reachable.
+- Disruption budgets preserve a two-node quorum during voluntary maintenance.
+
+## Deploy and verify
 
 ```powershell
-& ".\Kubernetes Foundation\Grafana\run-grafana.ps1"
-kubectl -n monitoring port-forward service/grafana 3000:3000
+.\Kubernetes Foundation\Kafka\run-kafka.ps1
 ```
 
-The script securely prompts for an administrator password and creates the
-`grafana-admin` Kubernetes Secret at deployment time. No real password is saved
-in this repository. Sign in at `http://localhost:3000` with username `admin` and
-the password you entered.
+The platform must provide a default `ReadWriteOnce` StorageClass. The manifests
+intentionally do not hard-code an AWS, Azure, or GCP StorageClass so the same base
+can run across the three clouds. The script checks for `kubectl`, cluster access,
+and StorageClasses before applying the manifests. Use `-TimeoutMinutes 20` if your
+cluster pulls images slowly.
 
-## Included dashboard
+## Operational guardrails
 
-The **Enterprise Banking Platform Overview** dashboard shows service availability,
-request rate, 5xx error rate, and active Prometheus alerts. It is provisioned as
-code, so changes in the UI cannot overwrite the version-controlled definition.
+`KAFKA_CLUSTER_ID` is generated for this cluster and must never change once its
+volumes are formatted. For a completely new cluster, generate a new ID before the
+first deployment; for recovery, restore the original ID together with the Kafka
+data volumes.
 
-For production, replace local Grafana storage with a managed database or an HA
-deployment, inject credentials through a cloud secret manager, and publish the UI
-only through an authenticated TLS ingress.
+This foundation keeps the existing application contract of plaintext internal
+Kafka traffic and restricts ingress to the `banking` namespace. It must not be
+exposed outside the cluster. The next security-hardening phase should move clients
+to TLS plus SASL or mTLS, with a secret manager and certificate rotation, before
+any production deployment handling real banking data.
