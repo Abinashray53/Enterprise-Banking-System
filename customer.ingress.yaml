@@ -1,0 +1,49 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: customer-service-ingress
+  namespace: banking
+
+  annotations:
+
+    nginx.ingress.kubernetes.io/rewrite-target: /
+
+    nginx.ingress.kubernetes.io/proxy-body-size: "20m"
+
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "120"
+
+spec:
+
+  ingressClassName: nginx
+
+  tls:
+
+    - hosts:
+        - api.bank.local
+
+      secretName: banking-tls
+
+  rules:
+
+    - host: api.bank.local
+
+      http:
+
+        paths:
+
+          - path: /customer
+
+            pathType: Prefix
+
+            backend:
+
+              service:
+
+                name: customer-service
+
+                port:
+
+                  number: 80
+                  

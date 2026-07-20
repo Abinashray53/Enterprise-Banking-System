@@ -1,0 +1,29 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+
+metadata:
+  name: customer-service-monitor
+  namespace: monitoring
+
+  labels:
+    release: prometheus
+
+spec:
+
+  namespaceSelector:
+    matchNames:
+      - banking
+
+  selector:
+    matchLabels:
+      app: customer-service
+
+  endpoints:
+
+    - port: http
+
+      path: /actuator/prometheus
+
+      interval: 30s
+
+      scrapeTimeout: 10s
