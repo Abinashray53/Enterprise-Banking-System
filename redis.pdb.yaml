@@ -1,0 +1,10 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: redis-pdb
+  namespace: banking
+spec:
+  minAvailable: 5
+  selector:
+    matchLabels:
+      app: redis
