@@ -1,0 +1,9 @@
+kubernetes/
+│
+├── base/
+│   ├── namespace.yaml
+│   ├── resourcequota.yaml
+│   ├── limitrange.yaml
+│   ├── configmap.yaml
+│   ├── secret.yaml
+│   └── serviceaccount.yaml
