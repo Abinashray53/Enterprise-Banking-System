@@ -1,0 +1,11 @@
+kubernetes/
+└── customer-service/
+    ├── customer-configmap.yaml
+    ├── customer-serviceaccount.yaml
+    ├── customer-deployment.yaml
+    ├── customer-service.yaml
+    ├── customer-hpa.yaml
+    ├── customer-networkpolicy.yaml
+    ├── customer-pdb.yaml
+    └── customer-ingress.yaml
+    

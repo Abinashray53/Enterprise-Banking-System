@@ -1,0 +1,13 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: loan-service-rolebinding
+  namespace: banking
+subjects:
+  - kind: ServiceAccount
+    name: loan-service-account
+    namespace: banking
+roleRef:
+  kind: Role
+  name: loan-service-role
+  apiGroup: rbac.authorization.k8s.io
